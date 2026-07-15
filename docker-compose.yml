@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devpulse-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://devpulse:devpulse@db:5432/devpulse
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: devpulse-db
+    environment:
+      - POSTGRES_USER=devpulse
+      - POSTGRES_PASSWORD=devpulse
+      - POSTGRES_DB=devpulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - devpulse-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devpulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  devpulse-db-data:
